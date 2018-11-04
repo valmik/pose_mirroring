@@ -18,7 +18,6 @@ class PoseMirror():
     publishes joints to a topic
     """
     def __init__(self):
-        super(ClassName, self).__init__()
         self._initialized = False
 
         # Tf
@@ -62,62 +61,76 @@ class PoseMirror():
 
         # Theta zeros
         if not rospy.has_param("~theta/default/1"):
+            rospy.logerr("failed to load ~theta/default/1")
             return False
         self._theta_default_1 = rospy.get_param("~theta/default/1")
 
         if not rospy.has_param("~theta/default/2"):
+            rospy.logerr("failed to load ~theta/default/2")
             return False
         self._theta_default_2 = rospy.get_param("~theta/default/2")
 
         if not rospy.has_param("~theta/default/3"):
+            rospy.logerr("failed to load ~theta/default/3")
             return False
         self._theta_default_3 = rospy.get_param("~theta/default/3")
 
         if not rospy.has_param("~theta/default/4"):
+            rospy.logerr("failed to load ~theta/default/4")
             return False
         self._theta_default_4 = rospy.get_param("~theta/default/4")
 
         if not rospy.has_param("~theta/default/5"):
+            rospy.logerr("failed to load ~theta/default/5")
             return False
         self._theta_default_5 = rospy.get_param("~theta/default/5")
 
         if not rospy.has_param("~theta/default/6"):
+            rospy.logerr("failed to load ~theta/default/6")
             return False
         self._theta_default_6 = rospy.get_param("~theta/default/6")
 
         if not rospy.has_param("~theta/default/7"):
+            rospy.logerr("failed to load ~theta/default/7")
             return False
         self._theta_default_7 = rospy.get_param("~theta/default/7")
 
         self._joint_names = ["s1", "s2", "e1", "e2", "w1", "w2", "w3"]
-        self._default_joints = [self._theta_default_1,
+        self._default_joints = np.array([self._theta_default_1,
                                 self._theta_default_2, 
                                 self._theta_default_3,
                                 self._theta_default_4,
                                 self._theta_default_5,
                                 self._theta_default_6,
-                                self._theta_default_7]
+                                self._theta_default_7])
 
         # Frames
         if not rospy.has_param("~frames/body"):
+            rospy.logerr("failed to load ~frames/body")
             return False
         self._body_frame = rospy.get_param("~frames/body")
 
         if not rospy.has_param("~frames/shoulder"):
+            rospy.logerr("failed to load ~frames/shoulder")
             return False
         self._shoulder_frame = rospy.get_param("~frames/shoulder")
 
         if not rospy.has_param("~frames/elbow"):
+            rospy.logerr("failed to load ~frames/elbow")
             return False
         self._elbow_frame = rospy.get_param("~frames/elbow")
 
         if not rospy.has_param("~frames/hand"):
+            rospy.logerr("failed to load ~frames/hands")    
             return False
         self._hand_frame = rospy.get_param("~frames/hand")
 
         if not rospy.has_param("~topics/joint"):
+            rospy.logerr("failed to load ~topics/joint")
             return False
         self._joint_topic = rospy.get_param("~topics/joint")
+
+        return True
 
     def LoadPublisher(self):
         """
@@ -152,17 +165,20 @@ class PoseMirror():
                 self._rate.sleep()
                 continue
               
-            shoulder_vec = vector3_to_arr(shoulder_pose.transform.translation)  
-            elbow_vec = vector3_to_arr(shoulder_pose.transform.translation)  
-            hand_vec = vector3_to_arr(shoulder_pose.transform.translation)  
+            shoulder_vec = self.vector3_to_arr(shoulder_pose.transform.translation) 
+            elbow_vec = self.vector3_to_arr(elbow_pose.transform.translation) 
+            hand_vec = self.vector3_to_arr(hand_pose.transform.translation)
 
-            (th1, th2, th3, th4) = angle_from_pos(shoulder_vec, elbow_vec, hand_vec, th30)
+            # rospy.loginfo(self._body_frame + self._shoulder_frame + self._elbow_frame + self._hand_frame)
+            rospy.loginfo(np.array2string(shoulder_vec) + np.array2string(elbow_vec) + np.array2string(hand_vec))
+            (th1, th2, th3, th4) = angle_from_pose(shoulder_vec, elbow_vec, hand_vec, th30)
 
             th30 = th3
 
             msg = JointState()
             msg.name = self._joint_names
-            msg.position = self._default_joints
+            msg.position = self._default_joints.copy()
+            rospy.loginfo(self._default_joints)
             msg.position[0] = msg.position[0] + th1
             msg.position[1] = msg.position[1] + th2
             msg.position[2] = msg.position[2] + th3
@@ -173,7 +189,7 @@ class PoseMirror():
             self._rate.sleep()
 
 
-    def vector3_to_arr(msg):
+    def vector3_to_arr(self, msg):
         """
         Turns a Vector3 message to a numpy array
 

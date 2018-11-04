@@ -1,0 +1,75 @@
+<launch>
+    <!-- tf frames -->
+    <arg name='body_frame' default='torso_1' />
+    <arg name='shoulder_frame' default='left_shoulder_1' />
+    <arg name='elbow_frame' default='left_elbow_1' />
+    <arg name='hand_frame' default='left_hand_1' />
+
+    <!-- zero angles -->
+    <!-- zero on the human frame gets mapped to this in robot frame -->
+    <arg name='theta_default_1' default="0.0" />
+    <arg name='theta_default_2' default="0.0" />
+    <arg name='theta_default_3' default="0.0" />
+    <arg name='theta_default_4' default="0.0" />
+    <arg name='theta_default_5' default="0.0" />
+    <arg name='theta_default_6' default="0.0" />
+    <arg name='theta_default_7' default="0.0" />
+
+    <!-- topic to publish joints -->
+    <arg name="joint_topic" default="skeleton_joints" />
+
+    <!-- Rviz file -->
+    <arg name="rviz_config" default="$(find pose_mirroring)/launch/kinect.rviz" />
+
+
+    <!-- Launch Kinect -->
+    <!-- <include file="$(find openni_launch)/launch/openni.launch" /> -->
+
+    <!-- Run Rviz -->
+    <node name="$(anon rviz)" pkg="rviz" type="rviz" respawn="false" args="-d $(arg rviz_config)" output="screen" />
+
+    <!-- Display a disparity view -->
+    <node name="$(anon disparity_view)" pkg="image_view" type="disparity_view" respawn="false" args="image:=/camera/depth/disparity" output="screen" />
+
+    <!-- Do a static transform to link the skeleton tracking to the standard kinect frames -->
+    <node name="$(anon openni_static_transform_publisher)" pkg="tf" type="static_transform_publisher" respawn="false" args="0 0 0 0 0 0 camera_depth_frame openni_depth_frame 100" />
+
+    <!-- Launch the tracker -->
+    <node name="$(anon openni_tracker)" pkg="openni_tracker" type="openni_tracker" respawn="true" output="screen" />
+
+    <!-- Pose Mirror Node -->
+    <node name="pose_mirroring_node"
+          pkg = "pose_mirroring"
+          type = "pose_mirror_node.py"
+          output = "screen">
+
+        <!-- frames -->
+        <param name="frames/body" value="$(arg body_frame)" />
+        <param name="frames/shoulder" value="$(arg shoulder_frame)" />
+        <param name="frames/elbow" value="$(arg elbow_frame)" />
+        <param name="frames/hand" value="$(arg hand_frame)" />
+
+        <!-- angles --> 
+        <param name="theta/default/1" value="$(arg theta_default_1)" />
+        <param name="theta/default/2" value="$(arg theta_default_2)" />
+        <param name="theta/default/3" value="$(arg theta_default_3)" />
+        <param name="theta/default/4" value="$(arg theta_default_4)" />
+        <param name="theta/default/5" value="$(arg theta_default_5)" />
+        <param name="theta/default/6" value="$(arg theta_default_6)" />
+        <param name="theta/default/7" value="$(arg theta_default_7)" />
+
+        <!-- topic -->
+        <param name="topics/joint" value="$(arg joint_topic)" />
+    </node>
+
+    <!-- Blue Robot Interface Node -->
+    <node name="joint_converter_node"
+          pkg = "blue_interface"
+          type = "joint_converter_node.py"
+          output = "screen">
+          
+        <!-- topic -->
+        <param name="topics/joint" value="$(arg joint_topic)" />
+    </node>
+
+</launch>

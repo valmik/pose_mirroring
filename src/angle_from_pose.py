@@ -2,7 +2,7 @@
 
 import numpy as np
 
-def angle_from_pos(ps, pe, pw, th3_0):
+def angle_from_pose(ps, pe, pw, th3_0):
     """
     Given the positions of the shoulder, elbow and wrist with respect the torso,
     calculate shoulder and elbow angle
@@ -21,12 +21,12 @@ def angle_from_pos(ps, pe, pw, th3_0):
         theta_4: elbow
     """
 
-    theta_1 = theta_1(ps, pe, pw)
-    theta_2 = theta_2(ps, pe, pw)
-    theta_3 = theta_3(ps, pe, pw, th3_0)
-    theta_4 = theta_4(ps, pe, pw)
+    t1 = theta_1(ps, pe, pw)
+    t2 = theta_2(ps, pe, pw)
+    t3 = theta_3(ps, pe, pw, th3_0)
+    t4 = theta_4(ps, pe, pw)
 
-    return (theta_1, theta_2, theta_3, theta_4)
+    return (t1, t2, t3, t4)
     
 
 def theta_4(ps, pe, pw):
@@ -51,7 +51,7 @@ def theta_1(ps, pe, pw):
     """
 
     se = (pe - ps)
-    return np.arctan(se[2] / se[0])
+    return np.arctan2(se[2], se[0])
 
 def theta_2(ps, pe, pw):
     """
@@ -61,7 +61,7 @@ def theta_2(ps, pe, pw):
     """
 
     se = (pe - ps)
-    return np.arctan(se[1] / se[0])
+    return np.arctan2(se[1], se[0])
 
 def theta_3(ps, pe, pw, th3_0):
     """
@@ -78,11 +78,11 @@ def theta_3(ps, pe, pw, th3_0):
         return th3_0
 
     arm_to_world = np.hstack([xhat.reshape(3,1), yhat.reshape(3,1), zhat.reshape(3,1)])
-    world_to_arm = np.linalg.inv(axlebasis)
+    world_to_arm = np.linalg.inv(arm_to_world)
 
     arm_w = world_to_arm.dot(pw - ps)
 
-    return np.arctan(arm_w[2]/armw[1])
+    return np.arctan2(arm_w[2], arm_w[1])
 
 def unitify(vec):
     """
@@ -124,3 +124,13 @@ def euclidean_distance(a, b):
 
 
 
+def test():
+   
+    ps = np.array([-121.01737622,   80.36406681,   -0.29080968])
+    pe = np.array([-113.44448157,  233.06002569, -212.4852529 ])
+    pw = np.array([-101.15949477,   35.30341924,  118.70431328])
+
+    print angle_from_pose(ps, pe, pw, 0.0) 
+
+if __name__ == '__main__':
+    test()
